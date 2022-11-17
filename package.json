@@ -1,0 +1,32 @@
+{
+  "name": "spread",
+  "version": "1.0.0",
+  "description": "A CLI application that measures how student's commits are spread using the standard deviation",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "ts-node index.ts"
+  },
+  "keywords": [
+    "spread",
+    "standard deviation",
+    "variance"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.43.0",
+    "@typescript-eslint/parser": "^5.43.0",
+    "eslint": "^8.27.0",
+    "prettier": "^2.7.1",
+    "ts-node": "^10.9.1",
+    "tsc": "^2.0.4",
+    "typescript": "^4.9.3"
+  },
+  "dependencies": {
+    "@types/node": "^18.11.9"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "semi": false
+  }
+}
