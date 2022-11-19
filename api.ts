@@ -1,24 +1,23 @@
 import z from 'zod'
+import fs from 'node:fs/promises'
 import axios from 'axios'
+import { extractDates } from './utlis'
 
 const Response = z.object({
   data: z.object({
     repository: z.object({
       refs: z.object({
-        edges: z.array(
+        nodes: z.array(
           z.object({
-            node: z.object({
-              name: z.string(),
-              target: z.object({
-                history: z.object({
-                  edges: z.array(
-                    z.object({
-                      node: z.object({
-                        committedDate: z.string(),
-                      }),
-                    })
-                  ),
-                }),
+            name: z.string(),
+            target: z.object({
+              history: z.object({
+                totalCount: z.number(),
+                nodes: z.array(
+                  z.object({
+                    committedDate: z.string(),
+                  })
+                ),
               }),
             }),
           })
@@ -31,32 +30,33 @@ const Response = z.object({
 // extract the inferred type
 export type GraphqlResponse = z.infer<typeof Response>
 
-export async function fetchDates(
+export async function fetchBranches(
   repo: string,
   org: string,
+  forkedDate: string,
+  bootcampEndDate: string,
   token: string
-): Promise<GraphqlResponse> {
+) {
   const query = `{
     repository(name: "${repo}", owner: "${org}") {
-      refs(
-        refPrefix: "refs/heads/"
-        orderBy: {direction: DESC, field: TAG_COMMIT_DATE}
-        first: 100
-      ) {
-        edges {
-          node {
-            name
-            ... on Ref {
-              name
-              target {
+     refs(
+      refPrefix: "refs/heads/"
+      orderBy: {direction: DESC, field: TAG_COMMIT_DATE}
+      first: 100
+    ) {
+      nodes {
+        name
+        target {
+          ... on Commit {
+            history(first: 50, since: "${forkedDate}", until: "${bootcampEndDate}") {
+              totalCount
+              nodes {
                 ... on Commit {
-                  history {
-                    edges {
-                      node {
-                       committedDate
-                      }
-                    }
-                  }
+                  message
+                  committedDate
+                 author {
+                  name
+                }
                 }
               }
             }
@@ -64,6 +64,7 @@ export async function fetchDates(
         }
       }
     }
+  }
   }`
 
   const res = await axios({
@@ -78,5 +79,8 @@ export async function fetchDates(
     },
   })
 
-  return Response.parse(res.data)
+  await fs.writeFile('data.json', JSON.stringify(res.data, null, 2), 'utf-8')
+  const file = await fs.readFile('data.json', 'utf-8')
+  const data = Response.parse(JSON.parse(file))
+  return extractDates(data)
 }
